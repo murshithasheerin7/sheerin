@@ -1,0 +1,2825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Chai bee — Table Ordering</title>
+  <style>
+    /* ==========================================================================
+       CSS VARIABLES & THEME TOKENS (Red & Warm White Café Theme)
+       ========================================================================== */
+    :root {
+      --red-primary: #B30E0E;
+      --red-dark: #8E0707;
+      --red-deep-pill: #6E0404;
+      --red-bright: #C91414;
+      --red-soft-bg: #FBEAEA;
+      --red-soft-border: #E8B8B8;
+      --red-button-border: #D16B6B;
+      --bg-page: #F6F3F2;
+      --bg-card: #FFFFFF;
+      --bg-tab-inactive: #EFECEB;
+      --text-main: #1C1414;
+      --text-secondary: #685B5B;
+      --text-muted: #948686;
+      --border-light: #ECE6E5;
+      --shadow-card: 0 4px 14px rgba(28, 12, 12, 0.06);
+      --shadow-float: 0 10px 26px rgba(142, 7, 7, 0.34);
+      --shadow-drawer: 0 -10px 35px rgba(0, 0, 0, 0.22);
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 22px;
+      --radius-pill: 999px;
+      --font-serif: Georgia, 'Times New Roman', Times, serif;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    /* ==========================================================================
+       RESET & BASE LAYOUT
+       ========================================================================== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      height: 100%;
+      background-color: #231919;
+      font-family: var(--font-sans);
+      color: var(--text-main);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Desktop presentation wrapper: centers a 375px–420px mobile viewport on large screens,
+       while taking 100% width and height naturally on actual mobile devices */
+    .app-shell {
+      position: relative;
+      width: 100%;
+      max-width: 414px;
+      min-height: 100vh;
+      margin: 0 auto;
+      background-color: var(--bg-page);
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+    }
+
+    @media (min-width: 480px) {
+      body {
+        padding: 18px 0;
+        height: auto;
+        min-height: 100vh;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+      }
+      .app-shell {
+        min-height: 844px;
+        height: 92vh;
+        max-height: 890px;
+        border-radius: 38px;
+        border: 8px solid #161010;
+        overflow: hidden;
+      }
+    }
+
+    /* ==========================================================================
+       CURVED RED HEADER
+       ========================================================================== */
+    .app-header {
+      position: relative;
+      background: linear-gradient(180deg, #980707 0%, #B81111 100%);
+      color: #FFFFFF;
+      padding: 16px 18px 22px;
+      border-bottom-left-radius: 50% 22px;
+      border-bottom-right-radius: 50% 22px;
+      box-shadow: 0 4px 16px rgba(142, 7, 7, 0.22);
+      z-index: 20;
+      flex-shrink: 0;
+    }
+
+    .header-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .header-brand-icon {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .header-brand-icon:active {
+      transform: scale(0.93);
+    }
+
+    .header-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      flex: 1;
+    }
+
+    .cafe-title {
+      font-family: var(--font-serif);
+      font-size: 29px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      line-height: 1.1;
+      color: #FFFFFF;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+    }
+
+    .table-badge {
+      margin-top: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background-color: var(--red-deep-pill);
+      color: #FFEFEF;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 4px 15px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      cursor: pointer;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+      transition: background-color 0.15s ease, transform 0.15s ease;
+    }
+
+    .table-badge:hover {
+      background-color: #590303;
+    }
+
+    .table-badge:active {
+      transform: scale(0.95);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .header-icon-btn {
+      position: relative;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255, 255, 255, 0.1);
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+
+    .header-icon-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .header-icon-btn:active {
+      transform: scale(0.92);
+    }
+
+    .header-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: var(--radius-pill);
+      background: #FFFFFF;
+      color: var(--red-primary);
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Expandable Search Bar inside Header */
+    .search-bar-wrap {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.25s ease, opacity 0.2s ease, margin-top 0.25s ease;
+    }
+
+    .search-bar-wrap.open {
+      max-height: 52px;
+      opacity: 1;
+      margin-top: 12px;
+    }
+
+    .search-input-box {
+      display: flex;
+      align-items: center;
+      background: #FFFFFF;
+      border-radius: var(--radius-pill);
+      padding: 7px 14px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.16);
+    }
+
+    .search-input-box input {
+      border: none;
+      outline: none;
+      width: 100%;
+      font-size: 14px;
+      color: var(--text-main);
+      background: transparent;
+      margin-left: 8px;
+    }
+
+    .search-clear-btn {
+      border: none;
+      background: #EFEAE9;
+      color: var(--text-secondary);
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      font-size: 13px;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ==========================================================================
+       SCROLLABLE MAIN VIEWPORT AREA
+       ========================================================================== */
+    .view-container {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-bottom: 110px;
+      scroll-behavior: smooth;
+    }
+
+    .view-container::-webkit-scrollbar {
+      width: 4px;
+    }
+    .view-container::-webkit-scrollbar-thumb {
+      background: rgba(179, 14, 14, 0.2);
+      border-radius: 4px;
+    }
+
+    .screen {
+      display: none;
+      animation: fadeIn 0.22s ease;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ==========================================================================
+       CATEGORY TABS BAR
+       ========================================================================== */
+    .category-tabs-wrap {
+      padding: 14px 12px 6px;
+      position: sticky;
+      top: 0;
+      z-index: 15;
+      background: linear-gradient(180deg, var(--bg-page) 85%, rgba(246, 243, 242, 0) 100%);
+    }
+
+    .category-tabs {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 7px;
+    }
+
+    .cat-tab {
+      border: 1px solid #E6E0DF;
+      background-color: var(--bg-tab-inactive);
+      border-radius: 14px;
+      padding: 9px 3px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      user-select: none;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+    }
+
+    .cat-tab-icon {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cat-tab-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--text-main);
+      text-align: center;
+      line-height: 1.15;
+      letter-spacing: -0.2px;
+      white-space: nowrap;
+    }
+
+    .cat-tab.active {
+      background: linear-gradient(180deg, #C11212 0%, #9E0808 100%);
+      border-color: #9E0808;
+      box-shadow: 0 5px 12px rgba(179, 14, 14, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .cat-tab.active .cat-tab-label {
+      color: #FFFFFF;
+      font-weight: 700;
+    }
+
+    /* Filter status pill when a single category is filtered */
+    .filter-pill-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 16px 0;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .show-all-link {
+      border: none;
+      background: none;
+      color: var(--red-primary);
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    /* ==========================================================================
+       MENU SECTIONS & ITEM CARDS
+       ========================================================================== */
+    .menu-content {
+      padding: 4px 14px 10px;
+    }
+
+    .category-section {
+      margin-bottom: 18px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 10px 2px 11px;
+    }
+
+    .section-accent-bar {
+      width: 4px;
+      height: 19px;
+      border-radius: 4px;
+      background-color: var(--red-primary);
+      flex-shrink: 0;
+    }
+
+    .section-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.2px;
+    }
+
+    .items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+    }
+
+    .item-card {
+      background-color: var(--bg-card);
+      border-radius: var(--radius-md);
+      padding: 10px 12px 10px 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--shadow-card);
+      border: 1px solid rgba(235, 228, 226, 0.8);
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .item-card.in-cart {
+      border-color: rgba(179, 14, 14, 0.28);
+      background: linear-gradient(90deg, #FFFFFF 0%, #FFFDFD 100%);
+    }
+
+    .item-thumb {
+      width: 74px;
+      height: 74px;
+      border-radius: 12px;
+      overflow: hidden;
+      flex-shrink: 0;
+      background-color: #2A1912;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .item-thumb svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .item-details {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 70px;
+    }
+
+    .item-title {
+      font-size: 15.5px;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.25;
+      margin-top: 2px;
+    }
+
+    .item-price {
+      font-size: 15.5px;
+      font-weight: 800;
+      color: var(--red-primary);
+      margin-top: 4px;
+    }
+
+    .item-bottom-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-top: auto;
+    }
+
+    /* Pill Quantity Stepper (- 0 +) matching reference screen */
+    .qty-pill {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 98px;
+      height: 32px;
+      border-radius: var(--radius-pill);
+      border: 1.5px solid #D97E7E;
+      background-color: #FDF7F7;
+      padding: 2px;
+      user-select: none;
+    }
+
+    .qty-btn-minus {
+      width: 28px;
+      height: 26px;
+      border: none;
+      background: transparent;
+      color: var(--red-primary);
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+
+    .qty-btn-minus:active {
+      background: rgba(179, 14, 14, 0.12);
+      transform: scale(0.9);
+    }
+
+    .qty-value {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text-main);
+      min-width: 22px;
+      text-align: center;
+    }
+
+    .qty-btn-plus {
+      width: 28px;
+      height: 26px;
+      border: none;
+      background-color: var(--red-primary);
+      color: #FFFFFF;
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1;
+      border-radius: var(--radius-pill);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(179, 14, 14, 0.3);
+      transition: background-color 0.15s ease, transform 0.1s ease;
+    }
+
+    .qty-btn-plus:active {
+      background-color: var(--red-dark);
+      transform: scale(0.9);
+    }
+
+    /* ==========================================================================
+       INLINE SESSION ORDER HISTORY & FINISH BUTTON ON MAIN PAGE
+       ========================================================================== */
+    .main-bottom-section {
+      padding: 8px 14px 24px;
+      border-top: 1px dashed #DFD6D4;
+      margin-top: 6px;
+    }
+
+    .inline-history-preview {
+      margin-bottom: 14px;
+    }
+
+    .finish-session-btn {
+      width: 100%;
+      padding: 13px 18px;
+      border-radius: 14px;
+      border: 1.5px solid var(--red-button-border);
+      background-color: #FFFFFF;
+      color: var(--red-primary);
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      cursor: pointer;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+      transition: all 0.15s ease;
+    }
+
+    .finish-session-btn:hover {
+      background-color: var(--red-soft-bg);
+    }
+
+    .finish-session-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* ==========================================================================
+       FLOATING BOTTOM CART BAR
+       ========================================================================== */
+    .floating-cart-wrap {
+      position: absolute;
+      bottom: 14px;
+      left: 12px;
+      right: 12px;
+      z-index: 30;
+      pointer-events: none;
+      transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.1), opacity 0.22s ease;
+      transform: translateY(120%);
+      opacity: 0;
+    }
+
+    @media (max-width: 479px) {
+      .floating-cart-wrap {
+        position: fixed;
+        max-width: 414px;
+        margin: 0 auto;
+      }
+    }
+
+    .floating-cart-wrap.visible {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .floating-cart-bar {
+      width: 100%;
+      background: linear-gradient(90deg, #9E0808 0%, #B81111 100%);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 18px;
+      padding: 13px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow-float);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    .floating-cart-bar:active {
+      transform: scale(0.98);
+    }
+
+    .cart-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .cart-icon-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cart-count-badge {
+      position: absolute;
+      top: -7px;
+      right: -8px;
+      background-color: #FFFFFF;
+      color: var(--red-primary);
+      font-size: 11.5px;
+      font-weight: 800;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 5px;
+      border-radius: var(--radius-pill);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    }
+
+    .cart-bar-label {
+      font-size: 15.5px;
+      font-weight: 700;
+      letter-spacing: 0.1px;
+    }
+
+    .cart-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .cart-bar-total {
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+
+    /* ==========================================================================
+       SLIDE-UP CART DRAWER ("Your Order")
+       ========================================================================== */
+    .drawer-backdrop {
+      position: absolute;
+      inset: 0;
+      background-color: rgba(20, 10, 10, 0.55);
+      backdrop-filter: blur(2px);
+      z-index: 50;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    @media (max-width: 479px) {
+      .drawer-backdrop {
+        position: fixed;
+      }
+    }
+
+    .drawer-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .cart-drawer {
+      background-color: #FAF8F8;
+      border-top-left-radius: 28px;
+      border-top-right-radius: 28px;
+      max-height: 88%;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-drawer);
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+      overflow: hidden;
+    }
+
+    .drawer-backdrop.open .cart-drawer {
+      transform: translateY(0);
+    }
+
+    .drawer-handle-bar {
+      width: 46px;
+      height: 4.5px;
+      background-color: var(--red-primary);
+      border-radius: var(--radius-pill);
+      margin: 12px auto 6px;
+      flex-shrink: 0;
+    }
+
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 20px 14px;
+      border-bottom: 1px solid var(--border-light);
+      flex-shrink: 0;
+    }
+
+    .drawer-title {
+      font-size: 21px;
+      font-weight: 800;
+      color: var(--red-primary);
+      letter-spacing: -0.3px;
+    }
+
+    .drawer-close-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      color: var(--red-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .drawer-items-scroll {
+      overflow-y: auto;
+      padding: 6px 18px;
+      flex: 1;
+    }
+
+    .cart-item-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid #EDE7E6;
+    }
+
+    .cart-item-thumb {
+      width: 66px;
+      height: 66px;
+      border-radius: 12px;
+      overflow: hidden;
+      flex-shrink: 0;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .cart-item-thumb svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .cart-item-middle {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .cart-item-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .cart-item-unit-price {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: var(--red-primary);
+      margin: 2px 0 6px;
+    }
+
+    /* Cart Drawer Pill Stepper with solid red minus & plus circles */
+    .cart-qty-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 96px;
+      height: 30px;
+      border-radius: var(--radius-pill);
+      background-color: var(--red-soft-bg);
+      padding: 2px;
+    }
+
+    .cart-qty-circle-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: none;
+      background-color: var(--red-primary);
+      color: #FFFFFF;
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .cart-qty-circle-btn:active {
+      transform: scale(0.9);
+    }
+
+    .cart-item-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: space-between;
+      height: 66px;
+    }
+
+    .cart-trash-btn {
+      border: none;
+      background: transparent;
+      color: #D93838;
+      padding: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cart-trash-btn:active {
+      transform: scale(0.88);
+    }
+
+    .cart-item-subtotal {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .drawer-footer {
+      padding: 12px 18px 20px;
+      background-color: #FAF8F8;
+      border-top: 1px solid var(--border-light);
+      flex-shrink: 0;
+    }
+
+    .bill-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14.5px;
+      color: var(--text-secondary);
+      margin-bottom: 7px;
+    }
+
+    .bill-line strong {
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    .total-amount-box {
+      background-color: var(--red-soft-bg);
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 10px 0 14px;
+    }
+
+    .total-amount-label {
+      font-size: 16.5px;
+      font-weight: 800;
+      color: var(--red-primary);
+    }
+
+    .total-amount-value {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--red-primary);
+    }
+
+    .go-order-btn {
+      width: 100%;
+      background: linear-gradient(90deg, #9E0808 0%, #B81111 100%);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 18px;
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      box-shadow: 0 6px 16px rgba(179, 14, 14, 0.3);
+      margin-bottom: 10px;
+      transition: transform 0.15s ease;
+    }
+
+    .go-order-btn:active {
+      transform: scale(0.98);
+    }
+
+    .go-divider {
+      opacity: 0.45;
+      font-weight: 400;
+    }
+
+    .keep-ordering-btn {
+      width: 100%;
+      background-color: #FFFFFF;
+      color: var(--red-primary);
+      border: 1.5px solid var(--red-button-border);
+      border-radius: 14px;
+      padding: 12px 18px;
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .keep-ordering-btn:active {
+      background-color: var(--red-soft-bg);
+    }
+
+    /* ==========================================================================
+       SCREEN 2: ORDER PLACED CONFIRMATION SCREEN
+       ========================================================================== */
+    .confirmation-card-wrap {
+      padding: 26px 20px 24px;
+      text-align: center;
+    }
+
+    .celebration-hero {
+      position: relative;
+      width: 180px;
+      height: 150px;
+      margin: 4px auto 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .check-outer-ring {
+      width: 112px;
+      height: 112px;
+      border-radius: 50%;
+      background-color: var(--red-soft-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: popScale 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+    }
+
+    .check-inner-circle {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      background-color: var(--red-primary);
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 16px rgba(179, 14, 14, 0.35);
+    }
+
+    @keyframes popScale {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .confetti-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .confirm-heading {
+      font-family: var(--font-serif);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--red-primary);
+      margin-bottom: 6px;
+    }
+
+    .confirm-subtext {
+      font-size: 15.5px;
+      color: var(--text-main);
+      margin-bottom: 24px;
+    }
+
+    .chef-thankyou-box {
+      background-color: var(--red-soft-bg);
+      border-radius: 16px;
+      padding: 18px 18px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      text-align: left;
+      margin-bottom: 26px;
+      border: 1px solid rgba(179, 14, 14, 0.08);
+    }
+
+    .chef-icon-wrap {
+      flex-shrink: 0;
+      color: var(--red-primary);
+    }
+
+    .chef-text-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--red-primary);
+      margin-bottom: 3px;
+    }
+
+    .chef-text-desc {
+      font-size: 13.5px;
+      color: #3A2A2A;
+      line-height: 1.38;
+    }
+
+    .primary-red-btn {
+      width: 100%;
+      background: linear-gradient(90deg, #9E0808 0%, #B81111 100%);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 14px;
+      padding: 15px 18px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 16px rgba(179, 14, 14, 0.28);
+      margin-bottom: 12px;
+    }
+
+    .primary-red-btn:active {
+      transform: scale(0.98);
+    }
+
+    .outline-red-btn {
+      width: 100%;
+      background-color: #FFFFFF;
+      color: var(--red-primary);
+      border: 1.5px solid var(--red-button-border);
+      border-radius: 14px;
+      padding: 13px 18px;
+      font-size: 15.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      cursor: pointer;
+    }
+
+    .outline-red-btn:active {
+      background-color: var(--red-soft-bg);
+    }
+
+    /* ==========================================================================
+       SCREEN 3: ORDER HISTORY VIEW
+       ========================================================================== */
+    .history-screen-wrap {
+      padding: 18px 14px 28px;
+    }
+
+    .history-header-block {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding: 0 2px;
+    }
+
+    .history-header-icon {
+      color: var(--red-primary);
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .history-main-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.2;
+    }
+
+    .history-subtitle {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .order-batch-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .order-batch-card {
+      background-color: #FFFFFF;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+      border: 1px solid #ECE4E3;
+    }
+
+    .order-batch-top {
+      background-color: var(--red-soft-bg);
+      padding: 11px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .order-batch-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .order-batch-bar {
+      width: 4px;
+      height: 18px;
+      border-radius: 3px;
+      background-color: var(--red-primary);
+    }
+
+    .order-batch-number {
+      font-size: 15.5px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .order-batch-time {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .order-batch-body {
+      padding: 12px 15px 13px;
+    }
+
+    .order-line-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      color: #2E2323;
+      margin-bottom: 7px;
+    }
+
+    .order-line-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .order-line-qty {
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .order-line-price {
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .order-batch-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 9px;
+      margin-top: 8px;
+      border-top: 1px solid #EFE9E8;
+    }
+
+    .order-batch-total-label {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .order-batch-total-val {
+      font-size: 16.5px;
+      font-weight: 800;
+      color: var(--red-primary);
+    }
+
+    .empty-history-card {
+      background: #FFFFFF;
+      border-radius: 16px;
+      padding: 28px 18px;
+      text-align: center;
+      color: var(--text-secondary);
+      border: 1px dashed #DFCECE;
+      margin-bottom: 18px;
+    }
+
+    /* ==========================================================================
+       MODAL DIALOG: END DINING SESSION ("FINISH" CONFIRMATION) & TABLE SWITCHER
+       ========================================================================== */
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background-color: rgba(18, 9, 9, 0.62);
+      backdrop-filter: blur(2px);
+      z-index: 70;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease;
+    }
+
+    @media (max-width: 479px) {
+      .modal-backdrop {
+        position: fixed;
+      }
+    }
+
+    .modal-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .dialog-card {
+      position: relative;
+      width: 100%;
+      max-width: 340px;
+      background-color: #FFFFFF;
+      border-radius: 24px;
+      padding: 26px 22px 22px;
+      text-align: center;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+      transform: scale(0.92);
+      transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+    }
+
+    .modal-backdrop.open .dialog-card {
+      transform: scale(1);
+    }
+
+    .dialog-close-x {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 30px;
+      height: 30px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dialog-icon-circle {
+      width: 78px;
+      height: 78px;
+      border-radius: 50%;
+      background-color: var(--red-soft-bg);
+      color: var(--red-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 4px auto 16px;
+    }
+
+    .dialog-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--red-primary);
+      margin-bottom: 10px;
+    }
+
+    .dialog-message {
+      font-size: 14.5px;
+      color: #362B2B;
+      line-height: 1.45;
+      margin-bottom: 10px;
+    }
+
+    .dialog-submessage {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      margin-bottom: 22px;
+    }
+
+    .dialog-actions {
+      display: grid;
+      grid-template-columns: 1fr 1.25fr;
+      gap: 10px;
+    }
+
+    .dialog-btn-no {
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1.5px solid var(--red-button-border);
+      background-color: #FFFFFF;
+      color: var(--red-primary);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .dialog-btn-yes {
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(90deg, #9E0808 0%, #B81111 100%);
+      color: #FFFFFF;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(179, 14, 14, 0.3);
+    }
+
+    /* Table input inside QR Simulator Modal */
+    .table-input-field {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: 1.5px solid #DECFCF;
+      font-size: 15px;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 14px;
+      outline: none;
+    }
+    .table-input-field:focus {
+      border-color: var(--red-primary);
+    }
+
+    /* Toast Notification */
+    .toast-banner {
+      position: absolute;
+      top: 86px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background-color: #201414;
+      color: #FFFFFF;
+      padding: 9px 18px;
+      border-radius: var(--radius-pill);
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+      z-index: 90;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.22s ease;
+      white-space: nowrap;
+    }
+
+    .toast-banner.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-shell">
+    <!-- Toast Message -->
+    <div id="toastBanner" class="toast-banner">Order saved!</div>
+
+    <!-- ========================================================================
+         CURVED RED HEADER (Chai bee + Table Badge + Search & History Toggles)
+         ======================================================================== -->
+    <header class="app-header">
+      <div class="header-top-row">
+        <!-- Left: Steaming Coffee Cup Icon (Clicking returns to Menu screen) -->
+        <div class="header-brand-icon" id="brandHomeBtn" title="Back to Menu">
+          <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+            <path d="M9.5 6.5C9.5 5 11 4.2 11 2.8" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M14 6.5C14 5 15.5 4.2 15.5 2.8" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M5 10H19V16.5C19 19.8137 16.3137 22.5 13 22.5H11C7.68629 22.5 5 19.8137 5 16.5V10Z" fill="#FFFFFF"/>
+            <path d="M19 11.5H21.2C22.7464 11.5 24 12.7536 24 14.3C24 15.8464 22.7464 17.1 21.2 17.1H19" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+            <path d="M3.5 24.5H20.5" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+
+        <!-- Center: Café Name & Table Pill Badge -->
+        <div class="header-center">
+          <h1 class="cafe-title">Chai bee</h1>
+          <button type="button" class="table-badge" id="tableBadgeBtn" title="Tap to simulate scanning a different QR table">
+            <span id="tableBadgeText">Table 5</span>
+          </button>
+        </div>
+
+        <!-- Right: Search Icon & Order History Icon -->
+        <div class="header-actions">
+          <button type="button" class="header-icon-btn" id="searchToggleBtn" aria-label="Search menu" title="Search items">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <circle cx="11" cy="11" r="7" stroke="#FFFFFF" stroke-width="2.2"/>
+              <path d="M16.5 16.5L21 21" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <button type="button" class="header-icon-btn" id="historyHeaderBtn" aria-label="Order History" title="View Order History">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="8.5" stroke="#FFFFFF" stroke-width="2"/>
+              <path d="M12 7.5V12L15 14" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span id="historyHeaderBadge" class="header-badge" style="display: none;">0</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Expandable Search Bar -->
+      <div id="searchBarWrap" class="search-bar-wrap">
+        <div class="search-input-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="7" stroke="#948686" stroke-width="2"/>
+            <path d="M16.5 16.5L21 21" stroke="#948686" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <input type="text" id="searchInput" placeholder="Search chai, burger, fries..." autocomplete="off" />
+          <button type="button" id="searchClearBtn" class="search-clear-btn">×</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ========================================================================
+         MAIN SCROLLABLE VIEWPORT (Houses Menu Screen, Confirmation, & History)
+         ======================================================================== -->
+    <main class="view-container" id="mainViewport">
+
+      <!-- ======================================================================
+           SCREEN 1: MENU & ORDERING VIEW
+           ====================================================================== -->
+      <section id="menuScreen" class="screen active">
+        <!-- Category Tabs -->
+        <div class="category-tabs-wrap">
+          <div class="category-tabs" id="categoryTabsContainer">
+            <!-- Populated dynamically with SVG icons -->
+          </div>
+        </div>
+
+        <!-- Active Filter Indicator (shown when filtering a specific category) -->
+        <div id="filterStatusRow" class="filter-pill-row" style="display: none;">
+          <span id="filterStatusText">Showing Tea &amp; Coffee</span>
+          <button type="button" class="show-all-link" id="showAllCategoriesBtn">Show All Categories</button>
+        </div>
+
+        <!-- Menu Items Container -->
+        <div class="menu-content" id="menuSectionsContainer">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Bottom Section on Menu Page: Session Order History Summary + FINISH Button -->
+        <div class="main-bottom-section">
+          <div id="inlineOrderHistorySection" class="inline-history-preview">
+            <!-- Shows placed orders in this session directly below the menu -->
+          </div>
+
+          <button type="button" class="finish-session-btn" id="mainFinishSessionBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M10 4H5C4.44772 4 4 4.44772 4 5V19C4 19.5523 4.44772 20 5 20H10" stroke="#B30E0E" stroke-width="2.2" stroke-linecap="round"/>
+              <path d="M14 16L19 12L14 8" stroke="#B30E0E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M9 12H18.5" stroke="#B30E0E" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>
+            <span>Finish Dining Session</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ======================================================================
+           SCREEN 2: ORDER PLACED CONFIRMATION SCREEN
+           ====================================================================== -->
+      <section id="confirmationScreen" class="screen">
+        <div class="confirmation-card-wrap">
+          <div class="celebration-hero">
+            <!-- Confetti SVG matching reference UI -->
+            <svg class="confetti-svg" viewBox="0 0 200 150" fill="none">
+              <rect x="22" y="25" width="7" height="4" rx="1" transform="rotate(-25 22 25)" fill="#B30E0E"/>
+              <rect x="52" y="10" width="5" height="9" rx="2" transform="rotate(30 52 10)" fill="#F3B32A"/>
+              <rect x="138" y="14" width="6" height="10" rx="2" transform="rotate(25 138 14)" fill="#D94B4B"/>
+              <rect x="168" y="34" width="6" height="6" rx="1" transform="rotate(-18 168 34)" fill="#F3B32A"/>
+              <rect x="18" y="72" width="8" height="4" rx="2" transform="rotate(20 18 72)" fill="#E29898"/>
+              <rect x="162" y="68" width="9" height="4" rx="2" transform="rotate(-30 162 68)" fill="#B30E0E"/>
+              <rect x="24" y="118" width="8" height="4" rx="2" transform="rotate(-35 24 118)" fill="#F3B32A"/>
+              <rect x="155" y="112" width="8" height="4" rx="2" transform="rotate(25 155 112)" fill="#D94B4B"/>
+              <circle cx="38" cy="48" r="2.5" fill="#F3B32A"/>
+              <circle cx="174" cy="94" r="2.5" fill="#F3B32A"/>
+            </svg>
+            <div class="check-outer-ring">
+              <div class="check-inner-circle">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                  <path d="M5.5 12.5L10 17L18.5 7.5" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <h2 class="confirm-heading">Order Placed!</h2>
+          <p class="confirm-subtext">Items are being prepared.</p>
+
+          <!-- Chef Hat Thank You Box -->
+          <div class="chef-thankyou-box">
+            <div class="chef-icon-wrap">
+              <svg width="46" height="46" viewBox="0 0 48 48" fill="none">
+                <path d="M14 27C10.134 27 7 23.866 7 20C7 16.41 9.701 13.45 13.18 13.047C14.66 9.495 18.165 7 22.25 7C26.335 7 29.84 9.495 31.32 13.047C34.799 13.45 37.5 16.41 37.5 20C37.5 23.866 34.366 27 30.5 27V36H14V27Z" stroke="#B30E0E" stroke-width="2.5" stroke-linejoin="round"/>
+                <path d="M14 32H30.5" stroke="#B30E0E" stroke-width="2.3" stroke-linecap="round"/>
+                <rect x="14" y="36" width="16.5" height="4" rx="1.5" stroke="#B30E0E" stroke-width="2.3"/>
+              </svg>
+            </div>
+            <div>
+              <div class="chef-text-title">Thank you!</div>
+              <div class="chef-text-desc">We'll bring your order to your table shortly.</div>
+            </div>
+          </div>
+
+          <button type="button" class="primary-red-btn" id="continueOrderingBtn">
+            Continue Ordering
+          </button>
+
+          <button type="button" class="outline-red-btn" id="viewOrderHistoryBtn">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="8.5" stroke="#B30E0E" stroke-width="2.2"/>
+              <path d="M12 7.5V12L15 14" stroke="#B30E0E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>View Order History</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ======================================================================
+           SCREEN 3: ORDER HISTORY VIEW
+           ====================================================================== -->
+      <section id="historyScreen" class="screen">
+        <div class="history-screen-wrap">
+          <div class="history-header-block">
+            <div class="history-header-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="9" stroke="#B30E0E" stroke-width="2.2"/>
+                <path d="M12 7.5V12.2L15.2 14.2" stroke="#B30E0E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div style="flex:1;">
+              <h2 class="history-main-title">Order History</h2>
+              <p class="history-subtitle">Your orders in this session</p>
+            </div>
+            <button type="button" class="show-all-link" id="backToMenuFromHistoryBtn" style="margin-top:4px;">+ Add More Items</button>
+          </div>
+
+          <!-- Dynamically populated order batches -->
+          <div id="historyBatchesContainer" class="order-batch-list"></div>
+
+          <button type="button" class="finish-session-btn" id="historyFinishSessionBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M10 4H5C4.44772 4 4 4.44772 4 5V19C4 19.5523 4.44772 20 5 20H10" stroke="#B30E0E" stroke-width="2.2" stroke-linecap="round"/>
+              <path d="M14 16L19 12L14 8" stroke="#B30E0E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M9 12H18.5" stroke="#B30E0E" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>
+            <span>Finish Dining Session</span>
+          </button>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ========================================================================
+         FLOATING BOTTOM CART BAR
+         ======================================================================== -->
+    <div id="floatingCartWrap" class="floating-cart-wrap">
+      <button type="button" class="floating-cart-bar" id="openCartDrawerBtn">
+        <div class="cart-bar-left">
+          <div class="cart-icon-wrap">
+            <svg width="25" height="25" viewBox="0 0 24 24" fill="none">
+              <path d="M3 4H5.2L7.4 15.2C7.58 16.12 8.39 16.8 9.33 16.8H17.8C18.7 16.8 19.48 16.19 19.7 15.32L21.4 8.2H6.1" stroke="#FFFFFF" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="9.6" cy="20.2" r="1.6" fill="#FFFFFF"/>
+              <circle cx="17.4" cy="20.2" r="1.6" fill="#FFFFFF"/>
+            </svg>
+            <span id="floatingCartBadge" class="cart-count-badge">0</span>
+          </div>
+          <span class="cart-bar-label">View Cart</span>
+        </div>
+
+        <div class="cart-bar-right">
+          <span id="floatingCartTotal" class="cart-bar-total">₹0</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M9 6L15 12L9 18" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </button>
+    </div>
+
+    <!-- ========================================================================
+         SLIDE-UP CART DRAWER ("Your Order")
+         ======================================================================== -->
+    <div id="cartDrawerBackdrop" class="drawer-backdrop">
+      <div class="cart-drawer" role="dialog" aria-labelledby="cartDrawerTitle">
+        <div class="drawer-handle-bar"></div>
+        <div class="drawer-header">
+          <h3 id="cartDrawerTitle" class="drawer-title">Your Order</h3>
+          <button type="button" class="drawer-close-btn" id="closeCartDrawerBtn" aria-label="Close cart">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M6 6L18 18M18 6L6 18" stroke="#B30E0E" stroke-width="2.3" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div id="cartDrawerItemsList" class="drawer-items-scroll">
+          <!-- Populated dynamically -->
+        </div>
+
+        <div class="drawer-footer">
+          <div class="bill-line">
+            <span>Subtotal</span>
+            <strong id="cartSubtotalText">₹0</strong>
+          </div>
+          <div class="bill-line">
+            <span>Taxes (0%)</span>
+            <strong>₹0</strong>
+          </div>
+
+          <div class="total-amount-box">
+            <span class="total-amount-label">Total Amount</span>
+            <span id="cartTotalAmountText" class="total-amount-value">₹0</span>
+          </div>
+
+          <!-- GO | Place Order Button -->
+          <button type="button" class="go-order-btn" id="goPlaceOrderBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M21 3L3 10.5L10.2 13.8L13.5 21L21 3Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="1.5" stroke-linejoin="round"/>
+              <path d="M10.2 13.8L21 3" stroke="#B30E0E" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+            <span>GO</span>
+            <span class="go-divider">|</span>
+            <span>Place Order</span>
+          </button>
+
+          <!-- Keep Ordering Button -->
+          <button type="button" class="keep-ordering-btn" id="keepOrderingBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M15 6L9 12L15 18" stroke="#B30E0E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Keep Ordering</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================
+         FINISH DINING SESSION CONFIRMATION MODAL ("End Dining Session?")
+         ======================================================================== -->
+    <div id="finishModalBackdrop" class="modal-backdrop">
+      <div class="dialog-card" role="dialog" aria-labelledby="finishDialogTitle">
+        <button type="button" class="dialog-close-x" id="closeFinishModalX" aria-label="Close dialog">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M6 6L18 18M18 6L6 18" stroke="#685B5B" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+        </button>
+
+        <div class="dialog-icon-circle">
+          <svg width="36" height="36" viewBox="0 0 28 28" fill="none">
+            <path d="M6 4.5C6 3.67157 6.67157 3 7.5 3H16.5C17.3284 3 18 3.67157 18 4.5V8" stroke="#B30E0E" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="M18 20V23.5C18 24.3284 17.3284 25 16.5 25H7.5C6.67157 25 6 24.3284 6 23.5V4.5" stroke="#B30E0E" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="M6 4.5L13 6.8V22.8L6 20.5V4.5Z" fill="#B30E0E"/>
+            <path d="M15 14H23.5M23.5 14L20 10.5M23.5 14L20 17.5" stroke="#B30E0E" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+
+        <h3 id="finishDialogTitle" class="dialog-title">End Dining Session?</h3>
+        <p class="dialog-message">Are you sure you want to end your dining session?</p>
+        <p class="dialog-submessage">You can still place orders until you finish.</p>
+
+        <div class="dialog-actions">
+          <button type="button" class="dialog-btn-no" id="finishModalNoBtn">No</button>
+          <button type="button" class="dialog-btn-yes" id="finishModalYesBtn">Yes, Finish</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================
+         TABLE / QR SIMULATOR MODAL (Triggered by clicking "Table 5" badge)
+         ======================================================================== -->
+    <div id="tableModalBackdrop" class="modal-backdrop">
+      <div class="dialog-card">
+        <button type="button" class="dialog-close-x" id="closeTableModalX" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M6 6L18 18M18 6L6 18" stroke="#685B5B" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <h3 class="dialog-title" style="margin-top:4px;">QR Table Identifier</h3>
+        <p class="dialog-submessage" style="margin-bottom:12px;">
+          Detected from URL query (<code>?table=5</code> or <code>?token=ABC123</code>). You can switch tables below to test:
+        </p>
+        <input type="text" id="customTableInput" class="table-input-field" placeholder="e.g. 5 or ABC123" />
+        <div class="dialog-actions">
+          <button type="button" class="dialog-btn-no" id="cancelTableModalBtn">Cancel</button>
+          <button type="button" class="dialog-btn-yes" id="saveTableModalBtn">Apply Table</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==========================================================================
+       VANILLA JAVASCRIPT APPLICATION LOGIC
+       ========================================================================== -->
+  <script>
+    (function () {
+      'use strict';
+
+      /* ------------------------------------------------------------------------
+         1. CUSTOM INLINE SVG ILLUSTRATIONS FOR CATEGORIES & ALL 12 MENU ITEMS
+            (Zero external image dependencies — crisp at any resolution)
+         ------------------------------------------------------------------------ */
+      const CATEGORY_ICONS = {
+        'Tea & Coffee': function (active) {
+          const stroke = active ? '#FFFFFF' : '#2C1814';
+          const fillCup = active ? '#FFFFFF' : '#B30E0E';
+          const steam = active ? '#FFD4D4' : '#B30E0E';
+          return `<svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+            <path d="M10 6.5C10 5.2 11.2 4.5 11.2 3.2" stroke="${steam}" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M14.5 6.5C14.5 5.2 15.7 4.5 15.7 3.2" stroke="${steam}" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M6 10H19V16C19 19.3137 16.3137 22 13 22H12C8.68629 22 6 19.3137 6 16V10Z" fill="${fillCup}" stroke="${stroke}" stroke-width="1.5"/>
+            <path d="M19 11.5H20.8C22.2 11.5 23.3 12.6 23.3 14C23.3 15.4 22.2 16.5 20.8 16.5H19" stroke="${stroke}" stroke-width="1.7" stroke-linecap="round"/>
+            <path d="M4.5 24H20.5" stroke="${stroke}" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>`;
+        },
+        'Fresh Juices': function (active) {
+          const stroke = active ? '#FFFFFF' : '#2C1814';
+          const liquid = active ? 'rgba(255,255,255,0.85)' : '#E03C31';
+          return `<svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+            <path d="M16.5 3.5L14 9" stroke="${stroke}" stroke-width="1.7" stroke-linecap="round"/>
+            <path d="M8 9H20L18.6 23.2C18.5 24.2 17.6 25 16.6 25H11.4C10.4 25 9.5 24.2 9.4 23.2L8 9Z" stroke="${stroke}" stroke-width="1.6" fill="none"/>
+            <path d="M8.7 14H19.3L18.3 23.2H9.7L8.7 14Z" fill="${liquid}"/>
+            <path d="M7 9H21" stroke="${stroke}" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>`;
+        },
+        'Snacks': function (active) {
+          const bucket = active ? '#FFFFFF' : '#B30E0E';
+          const fries = active ? '#FFD166' : '#F4A236';
+          const stroke = active ? '#FFFFFF' : '#2C1814';
+          return `<svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+            <rect x="8.5" y="4.5" width="2.6" height="9" rx="1" fill="${fries}" stroke="${stroke}" stroke-width="1.1"/>
+            <rect x="12.5" y="3" width="2.8" height="10" rx="1" fill="${fries}" stroke="${stroke}" stroke-width="1.1"/>
+            <rect x="16.5" y="5" width="2.6" height="8.5" rx="1" fill="${fries}" stroke="${stroke}" stroke-width="1.1"/>
+            <path d="M7 12H21L19.2 24H8.8L7 12Z" fill="${bucket}" stroke="${stroke}" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>`;
+        },
+        'Burgers': function (active) {
+          const bun = active ? '#FFFFFF' : '#E08E3C';
+          const patty = active ? '#FFD4D4' : '#8C2D19';
+          const stroke = active ? '#FFFFFF' : '#2C1814';
+          return `<svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+            <path d="M5.5 13C5.5 8.8 9 6 14 6C19 6 22.5 8.8 22.5 13H5.5Z" fill="${bun}" stroke="${stroke}" stroke-width="1.5"/>
+            <rect x="4.5" y="15" width="19" height="3.2" rx="1.6" fill="${patty}" stroke="${stroke}" stroke-width="1.3"/>
+            <path d="M6 20H22C22 22.2 20.2 23.5 18 23.5H10C7.8 23.5 6 22.2 6 20Z" fill="${bun}" stroke="${stroke}" stroke-width="1.5"/>
+          </svg>`;
+        },
+        'Desserts': function (active) {
+          const body = active ? '#FFFFFF' : '#F3C6C6';
+          const top = active ? '#FFD4D4' : '#B30E0E';
+          const stroke = active ? '#FFFFFF' : '#2C1814';
+          return `<svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+            <circle cx="14" cy="6.5" r="2.3" fill="${top}" stroke="${stroke}" stroke-width="1.2"/>
+            <path d="M6.5 15C6.5 11.5 9.8 9 14 9C18.2 9 21.5 11.5 21.5 15H6.5Z" fill="${top}" stroke="${stroke}" stroke-width="1.4"/>
+            <path d="M6.5 15H21.5L20 23.5H8L6.5 15Z" fill="${body}" stroke="${stroke}" stroke-width="1.5"/>
+          </svg>`;
+        }
+      };
+
+      const ITEM_ARTWORK = {
+        'masala-chai': `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="bgChai" cx="50%" cy="50%" r="70%">
+              <stop offset="0%" stop-color="#5C3317"/>
+              <stop offset="100%" stop-color="#1E0E06"/>
+            </radialGradient>
+            <linearGradient id="chaiTea" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#DF9B52"/>
+              <stop offset="100%" stop-color="#9C521B"/>
+            </linearGradient>
+          </defs>
+          <rect width="100" height="100" fill="url(#bgChai)"/>
+          <ellipse cx="48" cy="82" rx="34" ry="8" fill="#3B1E0D"/>
+          <ellipse cx="48" cy="80" rx="31" ry="6.5" fill="#6E3B1B" stroke="#8B502B" stroke-width="1"/>
+          <path d="M68 42H78C83 42 86 46 86 52C86 58 82 62 77 62H66" fill="none" stroke="#F5E6D3" stroke-width="5" stroke-linecap="round"/>
+          <path d="M24 34H72L67 73C66 78 60 81 48 81C36 81 30 78 29 73L24 34Z" fill="url(#chaiTea)" stroke="#F5E6D3" stroke-width="2.5"/>
+          <ellipse cx="48" cy="34" rx="24" ry="6.5" fill="#F3C78B" stroke="#FFF5E4" stroke-width="2"/>
+          <ellipse cx="48" cy="34" rx="20" ry="4.5" fill="#D58B43"/>
+          <path d="M40 22C38 17 43 14 41 9" stroke="#FFF3E0" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.7"/>
+          <path d="M52 24C50 18 55 15 53 10" stroke="#FFF3E0" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.7"/>
+          <rect x="62" y="76" width="24" height="4.5" rx="2" transform="rotate(18 62 76)" fill="#8B3E16" stroke="#5A240A" stroke-width="1"/>
+          <ellipse cx="24" cy="83" rx="4.5" ry="2.8" transform="rotate(-15 24 83)" fill="#8F9E4B"/>
+        </svg>`,
+
+        'cold-coffee': `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bgCold" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#3E2415"/>
+              <stop offset="100%" stop-color="#170C06"/>
+            </linearGradient>
+            <linearGradient id="icedCoffee" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#C88A55"/>
+              <stop offset="55%" stop-color="#8B4E24"/>
+              <stop offset="100%" stop-color="#4A220B"/>
+            </linearGradient>
+          </defs>
+          <rect width="100" height="100" fill="url(#bgCold)"/>
+          <ellipse cx="50" cy="88" rx="32" ry="6" fill="#120804" opacity="0.7"/>
+          <path d="M62 12L54 34" stroke="#2B1409" stroke-width="4" stroke-linecap="round"/>
+          <path d="M31 26H69L64 84C63.5 87 58 89 50 89C42 89 36.5 87 36 84L31 26Z" fill="url(#icedCoffee)" stroke="#F7E7D4" stroke-width="2"/>
+          <path d="M33 42Q45 48 66 39" stroke="#3D1A08" stroke-width="2.5" fill="none" opacity="0.75"/>
+          <path d="M35 58Q52 65 65 55" stroke="#3D1A08" stroke-width="2.5" fill="none" opacity="0.75"/>
+          <path d="M31 26C31 18 40 14 50 14C60 14 69 18 69 26C69 30 31 30 31 26Z" fill="#FFF8EE"/>
+          <ellipse cx="50" cy="26" rx="19" ry="5" fill="#F3DEC4"/>
+          <circle cx="46" cy="22" r="1.3" fill="#5A280D"/>
+          <circle cx="53" cy="20" r="1.3" fill="#5A280D"/>
+          <circle cx="50" cy="24" r="1.3" fill="#5A280D"/>
+        </svg>`,
+
+        'cappuccino': `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" fill="#2B170E"/>
+          <ellipse cx="50" cy="76" rx="38" ry="13" fill="#E6DFDA"/>
+          <ellipse cx="50" cy="74" rx="35" ry="11" fill="#FFFFFF"/>
+          <path d="M72 46H81C86 46 89 50 89 55C89 60 85 64 80 64H70" fill="none" stroke="#FFFFFF" stroke-width="5.5" stroke-linecap="round"/>
+          <path d="M22 42H78C78 64 67 75 50 75C33 75 22 64 22 42Z" fill="#F7F3F0"/>
+          <ellipse cx="50" cy="42" rx="28" ry="11" fill="#FFFFFF"/>
+          <ellipse cx="50" cy="42" rx="25" ry="9.5" fill="#B8733E"/>
+          <path d="M50 48C42 44 39 38 44 35C47 33 50 36 50 38C50 36 53 33 56 35C61 38 58 44 50 48Z" fill="#FFF8F0"/>
+          <ellipse cx="26" cy="77" rx="4" ry="2.6" transform="rotate(-25 26 77)" fill="#4A210B"/>
+          <ellipse cx="33" cy="80" rx="3.8" ry="2.5" transform="rotate(15 33 80)" fill="#3B1907"/>
+        </svg>`,
+
+        'mango-juice': `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="mangoGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#FFD026"/>
+              <stop offset="100%" stop-color="#F2790F"/>
+            </linearGradient>
+          </defs>
+          <rect width="100" height="100" fill="#362210"/>
+          <rect x="0" y="72" width="100" height="28" fill="#6E4423"/>
+          <path d="M36 22H72L67 82C66.5 85 60 87 54 87C48 87 41.5 85 41 82L36 22Z" fill="url(#mangoGrad)" stroke="#FFF6E5" stroke-width="2"/>
+          <ellipse cx="54" cy="23" rx="18" ry="4.5" fill="#FFE066"/>
+          <path d="M56 17C59 11 66 11 68 15C63 18 59 19 56 17Z" fill="#4CA634"/>
+          <!-- Fresh Mango Slice at Base -->
+          <path d="M12 78C12 64 26 60 39 68C43 76 34 88 18 86C13 85 12 81 12 78Z" fill="#FFA41B" stroke="#FFD15C" stroke-width="1.5"/>
+          <line x1="20" y1="69" x2="29" y2="83" stroke="#D96B00" stroke-width="1.2"/>
+          <line x1="27" y1="66" x2="35" y2="79" stroke="#D96B00" stroke-width="1.2"/>
+          <line x1="15" y1="76" x2="36" y2="73" stroke="#D96B00" stroke-width="1.2"/>
+        </svg>`,
+
+        'watermelon-juice': `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="melonGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#FF4B5C"/>
+              <stop offset="100%" stop-color="#A80B22"/>
+            </linearGradient>
+          </defs>
+          <rect width="100" height="100" fill="#2D1518"/>
+          <path d="M64 10L56 28" stroke="#FFD166" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M32 24H68L63 83C62 86 56 88 50 88C44 88 38 86 37 83L32 24Z" fill="url(#melonGrad)" stroke="#FFE8EB" stroke-width="2"/>
+          <ellipse cx="50" cy="24" rx="18" ry="4.5" fill="#FF7582"/>
+          <rect x="40" y="34" width="8" height="8" rx="2" fill="#FFFFFF" opacity="0.35"/>
+          <rect x="51" y="42" width="8" height="8" rx="2" fill="#FFFFFF" opacity="0.3"/>
+          <!-- Watermelon Wedge Garnish -->
+          <path d="M18 26L38 14L35 34Z" fill="#FF2E44" stroke="#3B8E29" stroke-width="3" stroke-linejoin="round"/>
+          <circle cx="29" cy="24" r="1.2" fill="#1D1D1D"/>
+          <circle cx="33" cy="21" r="1.2" fill="#1D1D1D"/>
+        </svg>`,
+
+        'french-fries': `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" fill="#2A180D"/>
+          <ellipse cx="50" cy="54" rx="38" ry="34" fill="#593116"/>
+          <ellipse cx="50" cy="52" rx="34" ry="30" fill="#3A1D0B"/>
+          <!-- Golden Fries Cluster -->
+          <g stroke="#C87619" stroke-width="1.2">
+            <rect x="24" y="28" width="9" height="42" rx="3" transform="rotate(-18 24 28)" fill="#FFC83D"/>
+            <rect x="35" y="18" width="9" height="48" rx="3" transform="rotate(-6 35 18)" fill="#FFD65A"/>
+            <rect x="47" y="16" width="9.5" height="50" rx="3" transform="rotate(5 47 16)" fill="#FFBE2E"/>
+            <rect x="59" y="20" width="9" height="46" rx="3" transform="rotate(16 59 20)" fill="#FFD24C"/>
+            <rect x="66" y="30" width="9" height="40" rx="3" transform="rotate(28 66 30)" fill="#F4A825"/>
+            <rect x="28" y="38" width="9" height="38" rx="3" transform="rotate(-32 28 38)" fill="#F7B32B"/>
+            <rect x="42" y="26" width="10" height="44" rx="3" transform="rotate(12 42 26)" fill="#FFE073"/>
+            <rect x="52" y="28" width="9.5" height="42" rx="3" transform="rotate(-10 52 28)" fill="#FFC436"/>
+          </g>
+          <path d="M16 54C16 74 31 86 50 86C69 86 84 74 84 54H78C76 70 64 78 50 78C36 78 24 70 22 54H16Z" fill="#7C4722"/>
+        </svg>`,
+
+        'chicken-popcorn': `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" fill="#2A170E"/>
+          <ellipse cx="50" cy="64" rx="38" ry="22" fill="#4E2A14"/>
+          <!-- Golden Crispy Chicken Popcorn Nuggets -->
+          <g stroke="#9E4711" stroke-width="1.5">
+            <circle cx="34" cy="48" r="12" fill="#E58728"/>
+            <circle cx="50" cy="40" r="13" fill="#F29B34"/>
+            <circle cx="66" cy="49" r="12" fill="#DE7E21"/>
+            <circle cx="28" cy="60" r="11" fill="#D47219"/>
+            <circle cx="44" cy="57" r="13" fill="#F5A63F"/>
+            <circle cx="60" cy="59" r="12.5" fill="#E88B2B"/>
+            <circle cx="72" cy="61" r="10.5" fill="#CF6D17"/>
+            <circle cx="51" cy="66" r="11" fill="#F09832"/>
+          </g>
+          <!-- Crispy Texture Specks -->
+          <circle cx="43" cy="54" r="1.5" fill="#B55314"/>
+          <circle cx="52" cy="38" r="1.5" fill="#B55314"/>
+          <circle cx="61" cy="56" r="1.5" fill="#B55314"/>
+          <circle cx="35" cy="46" r="1.5" fill="#B55314"/>
+          <path d="M14 60C16 79 31 88 50 88C69 88 84 79 86 60Z" fill="#F2ECE9"/>
+        </svg>`,
+
+        'paneer-tikka': `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" fill="#24140E"/>
+          <ellipse cx="50" cy="56" rx="42" ry="28" fill="#3B2318" stroke="#593728" stroke-width="2"/>
+          <!-- Skewers -->
+          <line x1="12" y1="74" x2="88" y2="26" stroke="#C0B6B1" stroke-width="2.2" stroke-linecap="round"/>
+          <line x1="16" y1="84" x2="90" y2="38" stroke="#C0B6B1" stroke-width="2.2" stroke-linecap="round"/>
+          <!-- Grilled Paneer Cubes & Peppers -->
+          <g transform="rotate(-31 50 50)">
+            <rect x="22" y="34" width="16" height="16" rx="3" fill="#F29426" stroke="#8C2D09" stroke-width="1.5"/>
+            <line x1="25" y1="38" x2="35" y2="46" stroke="#4D1503" stroke-width="2"/>
+            <rect x="40" y="35" width="7" height="14" rx="2" fill="#46962B"/>
+            <rect x="49" y="34" width="16" height="16" rx="3" fill="#F5A136" stroke="#8C2D09" stroke-width="1.5"/>
+            <line x1="52" y1="38" x2="62" y2="46" stroke="#4D1503" stroke-width="2"/>
+            <rect x="67" y="35" width="7" height="14" rx="2" fill="#D93829"/>
+          </g>
+          <g transform="rotate(-31 56 62)">
+            <rect x="26" y="52" width="15" height="15" rx="3" fill="#ED8820" stroke="#8C2D09" stroke-width="1.5"/>
+            <line x1="29" y1="56" x2="38" y2="64" stroke="#4D1503" stroke-width="2"/>
+            <rect x="44" y="52" width="15" height="15" rx="3" fill="#F49D32" stroke="#8C2D09" stroke-width="1.5"/>
+            <line x1="47" y1="56" x2="56" y2="64" stroke="#4D1503" stroke-width="2"/>
+          </g>
+        </svg>`,
+
+        'veg-burger': `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bunTop" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#F5A642"/>
+              <stop offset="100%" stop-color="#C86D19"/>
+            </linearGradient>
+          </defs>
+          <rect width="100" height="100" fill="#261710"/>
+          <ellipse cx="50" cy="84" rx="36" ry="7" fill="#140B07"/>
+          <!-- Bottom Bun -->
+          <path d="M20 68H80C80 77 71 82 50 82C29 82 20 77 20 68Z" fill="#E59539"/>
+          <!-- Green Lettuce Ruffle -->
+          <path d="M16 66Q23 72 30 66T44 66T58 66T72 66T84 66" fill="none" stroke="#58B833" stroke-width="5" stroke-linecap="round"/>
+          <!-- Veggie Patty -->
+          <rect x="18" y="54" width="64" height="11" rx="5.5" fill="#9E4516" stroke="#6E2B09" stroke-width="1.5"/>
+          <!-- Melted Cheese -->
+          <path d="M20 54H80L72 61L62 55L48 63L36 55L20 54Z" fill="#FFD22B"/>
+          <!-- Tomato Slices -->
+          <rect x="22" y="48" width="28" height="6" rx="3" fill="#E62E25"/>
+          <rect x="50" y="48" width="28" height="6" rx="3" fill="#D6241B"/>
+          <!-- Top Sesame Bun -->
+          <path d="M18 48C18 26 32 18 50 18C68 18 82 26 82 48H18Z" fill="url(#bunTop)"/>
+          <ellipse cx="38" cy="29" rx="2.5" ry="1.2" fill="#FFF3D6"/>
+          <ellipse cx="50" cy="25" rx="2.5" ry="1.2" fill="#FFF3D6"/>
+          <ellipse cx="62" cy="30" rx="2.5" ry="1.2" fill="#FFF3D6"/>
+          <ellipse cx="45" cy="35" rx="2.5" ry="1.2" fill="#FFF3D6"/>
+          <ellipse cx="56" cy="36" rx="2.5" ry="1.2" fill="#FFF3D6"/>
+        </svg>`,
+
+        'chicken-burger': `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" fill="#29150E"/>
+          <ellipse cx="50" cy="85" rx="37" ry="7" fill="#140A06"/>
+          <!-- Bottom Bun -->
+          <path d="M19 69H81C81 78 71 83 50 83C29 83 19 78 19 69Z" fill="#E39032"/>
+          <!-- Crispy Fried Chicken Fillet -->
+          <path d="M15 56C15 51 22 50 28 52C34 50 44 50 50 52C58 50 68 50 74 52C81 50 86 52 85 58C85 64 78 67 70 66C60 68 42 68 30 66C20 67 15 63 15 56Z" fill="#DF7E20" stroke="#9C4B0B" stroke-width="1.6"/>
+          <!-- Melted Cheddar -->
+          <path d="M19 53H81L68 62L52 54L38 61L19 53Z" fill="#FFC71F"/>
+          <!-- Crisp Lettuce & Mayo -->
+          <path d="M17 49Q26 55 35 49T53 49T71 49T83 49" fill="none" stroke="#63C132" stroke-width="5" stroke-linecap="round"/>
+          <!-- Glossy Brioche Top Bun -->
+          <path d="M18 47C18 25 32 17 50 17C68 17 82 25 82 47H18Z" fill="#D9771E"/>
+          <path d="M26 35C30 24 42 20 55 21" stroke="#F8B868" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.6"/>
+          <ellipse cx="42" cy="28" rx="2.3" ry="1.1" fill="#FFF3D6"/>
+          <ellipse cx="54" cy="26" rx="2.3" ry="1.1" fill="#FFF3D6"/>
+          <ellipse cx="64" cy="32" rx="2.3" ry="1.1" fill="#FFF3D6"/>
+        </svg>`,
+
+        'gulab-jamun': `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="jamunBall" cx="38%" cy="35%" r="65%">
+              <stop offset="0%" stop-color="#D46527"/>
+              <stop offset="55%" stop-color="#8A2D0B"/>
+              <stop offset="100%" stop-color="#4A1203"/>
+            </radialGradient>
+          </defs>
+          <rect width="100" height="100" fill="#26120B"/>
+          <!-- Ceramic Bowl -->
+          <ellipse cx="50" cy="60" rx="39" ry="22" fill="#F2E5D5" stroke="#C99E67" stroke-width="2"/>
+          <ellipse cx="50" cy="60" rx="34" ry="18" fill="#C86D25"/>
+          <!-- Gulab Jamun Spheres -->
+          <circle cx="40" cy="48" r="14.5" fill="url(#jamunBall)"/>
+          <circle cx="62" cy="50" r="14.5" fill="url(#jamunBall)"/>
+          <circle cx="50" cy="61" r="15" fill="url(#jamunBall)"/>
+          <!-- Pistachio Garnish -->
+          <ellipse cx="40" cy="44" rx="3.2" ry="1.6" transform="rotate(-20 40 44)" fill="#8CD147"/>
+          <ellipse cx="61" cy="46" rx="3.2" ry="1.6" transform="rotate(25 61 46)" fill="#8CD147"/>
+          <ellipse cx="50" cy="57" rx="3.5" ry="1.7" transform="rotate(10 50 57)" fill="#9AE052"/>
+          <path d="M12 60C14 80 30 89 50 89C70 89 86 80 88 60Z" fill="#E5C89E"/>
+        </svg>`,
+
+        'ice-cream': `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" fill="#2A1517"/>
+          <!-- Wafer Roll Stick -->
+          <rect x="62" y="14" width="7" height="32" rx="3" transform="rotate(22 62 14)" fill="#D99B52" stroke="#8C561E" stroke-width="1.2"/>
+          <!-- Scoops -->
+          <circle cx="37" cy="49" r="17" fill="#FFC2D1"/>
+          <circle cx="63" cy="50" r="17" fill="#FFF5E1"/>
+          <circle cx="50" cy="38" r="18" fill="#FFF9F0"/>
+          <!-- Chocolate Fudge Drizzle -->
+          <path d="M35 34Q50 24 65 35Q58 46 54 40Q49 52 44 39Z" fill="#52250C"/>
+          <!-- Cherry on Top -->
+          <circle cx="50" cy="20" r="6.5" fill="#D91428"/>
+          <path d="M50 14C54 8 61 7 64 10" stroke="#488E26" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <!-- Dessert Glass Bowl -->
+          <path d="M18 54H82L72 82H28L18 54Z" fill="#F2E9E4" stroke="#D8C8C0" stroke-width="2"/>
+          <rect x="36" y="82" width="28" height="6" rx="3" fill="#D8C8C0"/>
+        </svg>`
+      };
+
+      /* ------------------------------------------------------------------------
+         2. HARDCODED MENU DATA (Exact Categories, Names, and Prices Required)
+         ------------------------------------------------------------------------ */
+      const CATEGORIES = [
+        'Tea & Coffee',
+        'Fresh Juices',
+        'Snacks',
+        'Burgers',
+        'Desserts'
+      ];
+
+      const MENU_ITEMS = [
+        // Tea & Coffee
+        { id: 'masala-chai', name: 'Masala Chai', price: 30, category: 'Tea & Coffee' },
+        { id: 'cold-coffee', name: 'Cold Coffee', price: 120, category: 'Tea & Coffee' },
+        { id: 'cappuccino', name: 'Cappuccino', price: 90, category: 'Tea & Coffee' },
+        // Fresh Juices
+        { id: 'mango-juice', name: 'Mango Juice', price: 80, category: 'Fresh Juices' },
+        { id: 'watermelon-juice', name: 'Watermelon Juice', price: 70, category: 'Fresh Juices' },
+        // Snacks
+        { id: 'french-fries', name: 'French Fries', price: 90, category: 'Snacks' },
+        { id: 'chicken-popcorn', name: 'Chicken Popcorn', price: 120, category: 'Snacks' },
+        { id: 'paneer-tikka', name: 'Paneer Tikka', price: 130, category: 'Snacks' },
+        // Burgers
+        { id: 'veg-burger', name: 'Veg Burger', price: 110, category: 'Burgers' },
+        { id: 'chicken-burger', name: 'Chicken Burger', price: 149, category: 'Burgers' },
+        // Desserts
+        { id: 'gulab-jamun', name: 'Gulab Jamun', price: 60, category: 'Desserts' },
+        { id: 'ice-cream', name: 'Ice Cream', price: 80, category: 'Desserts' }
+      ];
+
+      /* ------------------------------------------------------------------------
+         3. APPLICATION STATE & LOCALSTORAGE KEYS
+         ------------------------------------------------------------------------ */
+      const STORAGE_KEY_ORDERS = 'chaibee_session_orders_v1';
+      const STORAGE_KEY_CART = 'chaibee_active_cart_v1';
+      const STORAGE_KEY_TABLE = 'chaibee_table_id_v1';
+
+      let state = {
+        tableLabel: 'Table 5',
+        activeCategory: 'Tea & Coffee', // Matches active red tab in reference screen 1
+        filterSingleCategory: false,    // False shows all categories; clicking tab filters or highlights
+        searchQuery: '',
+        cart: {},                       // { [itemId]: quantity }
+        orderHistory: [],               // Array of placed order batches in this session
+        currentScreen: 'menu'           // 'menu' | 'confirmation' | 'history'
+      };
+
+      /* ------------------------------------------------------------------------
+         4. URL TABLE / TOKEN EXTRACTION (?table=5 or ?token=ABC123)
+         ------------------------------------------------------------------------ */
+      function detectTableFromURL() {
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const tableParam = params.get('table');
+          const tokenParam = params.get('token');
+
+          if (tableParam && tableParam.trim() !== '') {
+            const clean = tableParam.trim();
+            state.tableLabel = /^table/i.test(clean) ? clean : `Table ${clean}`;
+            localStorage.setItem(STORAGE_KEY_TABLE, state.tableLabel);
+            return;
+          }
+          if (tokenParam && tokenParam.trim() !== '') {
+            const cleanToken = tokenParam.trim();
+            state.tableLabel = /^table/i.test(cleanToken) ? cleanToken : `Table ${cleanToken}`;
+            localStorage.setItem(STORAGE_KEY_TABLE, state.tableLabel);
+            return;
+          }
+
+          const savedTable = localStorage.getItem(STORAGE_KEY_TABLE);
+          if (savedTable) {
+            state.tableLabel = savedTable;
+          } else {
+            state.tableLabel = 'Table 5';
+          }
+        } catch (err) {
+          state.tableLabel = 'Table 5';
+        }
+      }
+
+      /* ------------------------------------------------------------------------
+         5. LOAD & SAVE STATE TO LOCALSTORAGE
+         ------------------------------------------------------------------------ */
+      function loadSessionFromStorage() {
+        try {
+          const rawOrders = localStorage.getItem(STORAGE_KEY_ORDERS);
+          if (rawOrders) {
+            const parsed = JSON.parse(rawOrders);
+            if (Array.isArray(parsed)) {
+              state.orderHistory = parsed;
+            }
+          }
+
+          const rawCart = localStorage.getItem(STORAGE_KEY_CART);
+          if (rawCart) {
+            const parsedCart = JSON.parse(rawCart);
+            if (parsedCart && typeof parsedCart === 'object') {
+              state.cart = parsedCart;
+            }
+          }
+        } catch (e) {
+          state.orderHistory = [];
+          state.cart = {};
+        }
+      }
+
+      function saveCartToStorage() {
+        try {
+          localStorage.setItem(STORAGE_KEY_CART, JSON.stringify(state.cart));
+        } catch (e) {
+          // Ignore storage quota errors
+        }
+      }
+
+      function saveOrdersToStorage() {
+        try {
+          localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify(state.orderHistory));
+        } catch (e) {
+          // Ignore storage quota errors
+        }
+      }
+
+      /* ------------------------------------------------------------------------
+         6. HELPER UTILITIES
+         ------------------------------------------------------------------------ */
+      function getItemById(id) {
+        return MENU_ITEMS.find(function (item) { return item.id === id; });
+      }
+
+      function getCartTotals() {
+        let count = 0;
+        let subtotal = 0;
+        Object.keys(state.cart).forEach(function (itemId) {
+          const qty = state.cart[itemId] || 0;
+          const item = getItemById(itemId);
+          if (item && qty > 0) {
+            count += qty;
+            subtotal += item.price * qty;
+          }
+        });
+        return { count: count, subtotal: subtotal };
+      }
+
+      function formatTime12Hour(dateObj) {
+        let hours = dateObj.getHours();
+        const minutes = dateObj.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        const hStr = hours < 10 ? '0' + hours : '' + hours;
+        const mStr = minutes < 10 ? '0' + minutes : '' + minutes;
+        return `${hStr}:${mStr} ${ampm}`;
+      }
+
+      let toastTimer = null;
+      function showToast(msg) {
+        const banner = document.getElementById('toastBanner');
+        if (!banner) return;
+        banner.textContent = msg;
+        banner.classList.add('show');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+          banner.classList.remove('show');
+        }, 2300);
+      }
+
+      /* ------------------------------------------------------------------------
+         7. RENDER FUNCTIONS
+         ------------------------------------------------------------------------ */
+      function renderHeader() {
+        const badgeText = document.getElementById('tableBadgeText');
+        if (badgeText) {
+          badgeText.textContent = state.tableLabel;
+        }
+
+        const historyBadge = document.getElementById('historyHeaderBadge');
+        if (historyBadge) {
+          const batchCount = state.orderHistory.length;
+          if (batchCount > 0) {
+            historyBadge.style.display = 'flex';
+            historyBadge.textContent = batchCount;
+          } else {
+            historyBadge.style.display = 'none';
+          }
+        }
+      }
+
+      function renderCategoryTabs() {
+        const container = document.getElementById('categoryTabsContainer');
+        if (!container) return;
+
+        container.innerHTML = CATEGORIES.map(function (cat) {
+          const isActive = state.activeCategory === cat;
+          return `
+            <button type="button" class="cat-tab ${isActive ? 'active' : ''}" data-category="${cat}">
+              <div class="cat-tab-icon">${CATEGORY_ICONS[cat](isActive)}</div>
+              <span class="cat-tab-label">${cat}</span>
+            </button>
+          `;
+        }).join('');
+
+        const filterRow = document.getElementById('filterStatusRow');
+        const filterText = document.getElementById('filterStatusText');
+        if (state.filterSingleCategory && !state.searchQuery) {
+          filterRow.style.display = 'flex';
+          filterText.textContent = `Category: ${state.activeCategory}`;
+        } else {
+          filterRow.style.display = 'none';
+        }
+      }
+
+      function renderMenuSections() {
+        const container = document.getElementById('menuSectionsContainer');
+        if (!container) return;
+
+        const query = state.searchQuery.trim().toLowerCase();
+        const categoriesToRender = (state.filterSingleCategory && !query)
+          ? [state.activeCategory]
+          : CATEGORIES;
+
+        let html = '';
+        let totalMatched = 0;
+
+        categoriesToRender.forEach(function (categoryName) {
+          const items = MENU_ITEMS.filter(function (item) {
+            const matchesCat = item.category === categoryName;
+            const matchesSearch = !query ||
+              item.name.toLowerCase().includes(query) ||
+              item.category.toLowerCase().includes(query);
+            return matchesCat && matchesSearch;
+          });
+
+          if (items.length === 0) return;
+          totalMatched += items.length;
+
+          const itemsHtml = items.map(function (item) {
+            const qty = state.cart[item.id] || 0;
+            const inCartClass = qty > 0 ? 'in-cart' : '';
+            return `
+              <div class="item-card ${inCartClass}" data-item-id="${item.id}">
+                <div class="item-thumb">
+                  ${ITEM_ARTWORK[item.id] || ''}
+                </div>
+                <div class="item-details">
+                  <div>
+                    <div class="item-title">${item.name}</div>
+                    <div class="item-price">₹${item.price}</div>
+                  </div>
+                  <div class="item-bottom-row">
+                    <div class="qty-pill">
+                      <button type="button" class="qty-btn-minus" data-action="decrement" data-id="${item.id}" aria-label="Decrease ${item.name}">−</button>
+                      <span class="qty-value">${qty}</span>
+                      <button type="button" class="qty-btn-plus" data-action="increment" data-id="${item.id}" aria-label="Increase ${item.name}">+</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          html += `
+            <div class="category-section" id="cat-sec-${categoryName.replace(/[^a-zA-Z]/g, '')}">
+              <div class="section-header">
+                <span class="section-accent-bar"></span>
+                <h2 class="section-title">${categoryName}</h2>
+              </div>
+              <div class="items-list">
+                ${itemsHtml}
+              </div>
+            </div>
+          `;
+        });
+
+        if (totalMatched === 0) {
+          html = `
+            <div class="empty-history-card" style="margin-top:16px;">
+              <p style="font-weight:700; color:#1C1414; margin-bottom:4px;">No matching items found</p>
+              <p style="font-size:13px;">Try clearing your search filter.</p>
+            </div>
+          `;
+        }
+
+        container.innerHTML = html;
+      }
+
+      function renderFloatingCartBar() {
+        const wrap = document.getElementById('floatingCartWrap');
+        const badge = document.getElementById('floatingCartBadge');
+        const totalEl = document.getElementById('floatingCartTotal');
+        if (!wrap || !badge || !totalEl) return;
+
+        const totals = getCartTotals();
+        badge.textContent = totals.count;
+        totalEl.textContent = `₹${totals.subtotal}`;
+
+        if (totals.count > 0 && state.currentScreen === 'menu') {
+          wrap.classList.add('visible');
+        } else {
+          wrap.classList.remove('visible');
+        }
+      }
+
+      function renderCartDrawer() {
+        const listEl = document.getElementById('cartDrawerItemsList');
+        const subEl = document.getElementById('cartSubtotalText');
+        const totEl = document.getElementById('cartTotalAmountText');
+        if (!listEl || !subEl || !totEl) return;
+
+        const totals = getCartTotals();
+        subEl.textContent = `₹${totals.subtotal}`;
+        totEl.textContent = `₹${totals.subtotal}`;
+
+        const cartIds = Object.keys(state.cart).filter(function (id) {
+          return state.cart[id] > 0;
+        });
+
+        if (cartIds.length === 0) {
+          listEl.innerHTML = `
+            <div class="empty-history-card" style="margin: 18px 0;">
+              <p style="font-weight:700; color:#1C1414; margin-bottom:4px;">Your cart is empty</p>
+              <p style="font-size:13px;">Add delicious items from the menu to place an order.</p>
+            </div>
+          `;
+          return;
+        }
+
+        listEl.innerHTML = cartIds.map(function (id) {
+          const item = getItemById(id);
+          const qty = state.cart[id];
+          if (!item) return '';
+          const lineSubtotal = item.price * qty;
+
+          return `
+            <div class="cart-item-row">
+              <div class="cart-item-thumb">
+                ${ITEM_ARTWORK[item.id] || ''}
+              </div>
+              <div class="cart-item-middle">
+                <div class="cart-item-name">${item.name}</div>
+                <div class="cart-item-unit-price">₹${item.price}</div>
+                <div class="cart-qty-pill">
+                  <button type="button" class="cart-qty-circle-btn" data-action="decrement" data-id="${item.id}" aria-label="Decrease">−</button>
+                  <span class="qty-value">${qty}</span>
+                  <button type="button" class="cart-qty-circle-btn" data-action="increment" data-id="${item.id}" aria-label="Increase">+</button>
+                </div>
+              </div>
+              <div class="cart-item-right">
+                <button type="button" class="cart-trash-btn" data-action="remove" data-id="${item.id}" aria-label="Remove item">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M4 7H20M9 7V4.5C9 4.22386 9.22386 4 9.5 4H14.5C14.7761 4 15 4.22386 15 4.5V7M6.5 7L7.4 19.1C7.48 20.17 8.37 21 9.44 21H14.56C15.63 21 16.52 20.17 16.6 19.1L17.5 7" stroke="#D92626" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M10 11V17M14 11V17" stroke="#D92626" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                </button>
+                <div class="cart-item-subtotal">₹${lineSubtotal}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function buildOrderBatchCardHtml(batch) {
+        const linesHtml = batch.items.map(function (line) {
+          return `
+            <div class="order-line-item">
+              <div class="order-line-left">
+                <span class="order-line-qty">${line.qty} &times;</span>
+                <span>${line.name}</span>
+              </div>
+              <span class="order-line-price">₹${line.price * line.qty}</span>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="order-batch-card">
+            <div class="order-batch-top">
+              <div class="order-batch-title-wrap">
+                <span class="order-batch-bar"></span>
+                <span class="order-batch-number">Order #${batch.orderNumber}</span>
+              </div>
+              <span class="order-batch-time">${batch.time}</span>
+            </div>
+            <div class="order-batch-body">
+              ${linesHtml}
+              <div class="order-batch-total-row">
+                <span class="order-batch-total-label">Total</span>
+                <span class="order-batch-total-val">₹${batch.total}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderOrderHistoryViews() {
+        const dedicatedContainer = document.getElementById('historyBatchesContainer');
+        const inlineContainer = document.getElementById('inlineOrderHistorySection');
+
+        // Display orders in reverse chronological order (Order #3, #2, #1) matching Screen 5
+        const reversed = state.orderHistory.slice().reverse();
+
+        if (dedicatedContainer) {
+          if (reversed.length === 0) {
+            dedicatedContainer.innerHTML = `
+              <div class="empty-history-card">
+                <p style="font-weight:700; color:#1C1414; margin-bottom:4px;">No orders placed yet</p>
+                <p style="font-size:13px;">Select items from the menu and tap <strong>GO | Place Order</strong> to start your dining session.</p>
+              </div>
+            `;
+          } else {
+            dedicatedContainer.innerHTML = reversed.map(buildOrderBatchCardHtml).join('');
+          }
+        }
+
+        if (inlineContainer) {
+          if (reversed.length === 0) {
+            inlineContainer.innerHTML = '';
+          } else {
+            const grandTotal = state.orderHistory.reduce(function (sum, b) { return sum + b.total; }, 0);
+            inlineContainer.innerHTML = `
+              <div class="history-header-block" style="margin-top:6px; margin-bottom:12px;">
+                <div class="history-header-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="9" stroke="#B30E0E" stroke-width="2.2"/>
+                    <path d="M12 7.5V12.2L15.2 14.2" stroke="#B30E0E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div style="flex:1;">
+                  <h2 class="history-main-title" style="font-size:17.5px;">Order History (${reversed.length})</h2>
+                  <p class="history-subtitle" style="font-size:12.5px;">Session Total: <strong style="color:#B30E0E;">₹${grandTotal}</strong></p>
+                </div>
+              </div>
+              <div class="order-batch-list">
+                ${reversed.map(buildOrderBatchCardHtml).join('')}
+              </div>
+            `;
+          }
+        }
+      }
+
+      function renderAll() {
+        renderHeader();
+        renderCategoryTabs();
+        renderMenuSections();
+        renderFloatingCartBar();
+        renderCartDrawer();
+        renderOrderHistoryViews();
+      }
+
+      /* ------------------------------------------------------------------------
+         8. SCREEN NAVIGATION & CART/ORDER ACTIONS
+         ------------------------------------------------------------------------ */
+      function switchScreen(screenName) {
+        state.currentScreen = screenName;
+        const menuEl = document.getElementById('menuScreen');
+        const confirmEl = document.getElementById('confirmationScreen');
+        const historyEl = document.getElementById('historyScreen');
+        const viewport = document.getElementById('mainViewport');
+
+        menuEl.classList.toggle('active', screenName === 'menu');
+        confirmEl.classList.toggle('active', screenName === 'confirmation');
+        historyEl.classList.toggle('active', screenName === 'history');
+
+        if (viewport) viewport.scrollTop = 0;
+        renderFloatingCartBar();
+      }
+
+      function updateItemQuantity(itemId, delta) {
+        const current = state.cart[itemId] || 0;
+        const next = Math.max(0, current + delta);
+        if (next === 0) {
+          delete state.cart[itemId];
+        } else {
+          state.cart[itemId] = next;
+        }
+        saveCartToStorage();
+        renderMenuSections();
+        renderFloatingCartBar();
+        renderCartDrawer();
+
+        // If inside cart drawer and last item was removed, close drawer smoothly
+        if (getCartTotals().count === 0) {
+          closeCartDrawer();
+        }
+      }
+
+      function removeItemFromCart(itemId) {
+        delete state.cart[itemId];
+        saveCartToStorage();
+        renderMenuSections();
+        renderFloatingCartBar();
+        renderCartDrawer();
+
+        if (getCartTotals().count === 0) {
+          closeCartDrawer();
+        }
+      }
+
+      function openCartDrawer() {
+        if (getCartTotals().count === 0) return;
+        renderCartDrawer();
+        document.getElementById('cartDrawerBackdrop').classList.add('open');
+      }
+
+      function closeCartDrawer() {
+        document.getElementById('cartDrawerBackdrop').classList.remove('open');
+      }
+
+      function placeOrderGo() {
+        const totals = getCartTotals();
+        if (totals.count === 0) return;
+
+        const itemsBatch = [];
+        Object.keys(state.cart).forEach(function (id) {
+          const qty = state.cart[id];
+          const item = getItemById(id);
+          if (item && qty > 0) {
+            itemsBatch.push({
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              qty: qty
+            });
+          }
+        });
+
+        const nextOrderNum = state.orderHistory.length + 1;
+        const newOrder = {
+          orderNumber: nextOrderNum,
+          table: state.tableLabel,
+          time: formatTime12Hour(new Date()),
+          timestamp: new Date().toISOString(),
+          items: itemsBatch,
+          total: totals.subtotal
+        };
+
+        // 1. Save order batch to localStorage
+        state.orderHistory.push(newOrder);
+        saveOrdersToStorage();
+
+        // 2. Reset active cart while keeping session open for additional orders
+        state.cart = {};
+        saveCartToStorage();
+
+        // 3. Close drawer, re-render UI, and show Order Placed confirmation screen
+        closeCartDrawer();
+        renderAll();
+        switchScreen('confirmation');
+      }
+
+      function openFinishModal() {
+        document.getElementById('finishModalBackdrop').classList.add('open');
+      }
+
+      function closeFinishModal() {
+        document.getElementById('finishModalBackdrop').classList.remove('open');
+      }
+
+      function confirmFinishDiningSession() {
+        // Clear session orders and active cart
+        state.orderHistory = [];
+        state.cart = {};
+        localStorage.removeItem(STORAGE_KEY_ORDERS);
+        localStorage.removeItem(STORAGE_KEY_CART);
+
+        closeFinishModal();
+        renderAll();
+        switchScreen('menu');
+        showToast('Dining session ended. Thank you for visiting Chai bee!');
+      }
+
+      /* ------------------------------------------------------------------------
+         9. EVENT LISTENERS SETUP
+         ------------------------------------------------------------------------ */
+      function bindEvents() {
+        // Category Tab Clicks
+        const tabsContainer = document.getElementById('categoryTabsContainer');
+        tabsContainer.addEventListener('click', function (e) {
+          const tabBtn = e.target.closest('.cat-tab');
+          if (!tabBtn) return;
+          const clickedCat = tabBtn.getAttribute('data-category');
+          if (!clickedCat) return;
+
+          if (state.activeCategory === clickedCat && state.filterSingleCategory) {
+            // Clicking active filtered tab again restores showing all categories
+            state.filterSingleCategory = false;
+          } else {
+            state.activeCategory = clickedCat;
+            state.filterSingleCategory = false;
+            // Smooth scroll to the category section on the menu screen
+            const secId = 'cat-sec-' + clickedCat.replace(/[^a-zA-Z]/g, '');
+            const secEl = document.getElementById(secId);
+            const viewport = document.getElementById('mainViewport');
+            if (secEl && viewport) {
+              viewport.scrollTo({
+                top: Math.max(0, secEl.offsetTop - 88),
+                behavior: 'smooth'
+              });
+            }
+          }
+          renderCategoryTabs();
+          renderMenuSections();
+        });
+
+        // Show All Categories button
+        document.getElementById('showAllCategoriesBtn').addEventListener('click', function () {
+          state.filterSingleCategory = false;
+          renderCategoryTabs();
+          renderMenuSections();
+        });
+
+        // Menu Item Quantity Buttons (+ / -)
+        document.getElementById('menuSectionsContainer').addEventListener('click', function (e) {
+          const btn = e.target.closest('button[data-action]');
+          if (!btn) return;
+          const action = btn.getAttribute('data-action');
+          const id = btn.getAttribute('data-id');
+          if (action === 'increment') updateItemQuantity(id, 1);
+          if (action === 'decrement') updateItemQuantity(id, -1);
+        });
+
+        // Cart Drawer Quantity & Trash Buttons
+        document.getElementById('cartDrawerItemsList').addEventListener('click', function (e) {
+          const btn = e.target.closest('button[data-action]');
+          if (!btn) return;
+          const action = btn.getAttribute('data-action');
+          const id = btn.getAttribute('data-id');
+          if (action === 'increment') updateItemQuantity(id, 1);
+          if (action === 'decrement') updateItemQuantity(id, -1);
+          if (action === 'remove') removeItemFromCart(id);
+        });
+
+        // Floating Cart Bar & Cart Drawer Controls
+        document.getElementById('openCartDrawerBtn').addEventListener('click', openCartDrawer);
+        document.getElementById('closeCartDrawerBtn').addEventListener('click', closeCartDrawer);
+        document.getElementById('keepOrderingBtn').addEventListener('click', closeCartDrawer);
+        document.getElementById('cartDrawerBackdrop').addEventListener('click', function (e) {
+          if (e.target === this) closeCartDrawer();
+        });
+
+        // GO | Place Order Button inside Cart
+        document.getElementById('goPlaceOrderBtn').addEventListener('click', placeOrderGo);
+
+        // Confirmation Screen Buttons
+        document.getElementById('continueOrderingBtn').addEventListener('click', function () {
+          switchScreen('menu');
+        });
+        document.getElementById('viewOrderHistoryBtn').addEventListener('click', function () {
+          switchScreen('history');
+        });
+
+        // Header Navigation Icons
+        document.getElementById('brandHomeBtn').addEventListener('click', function () {
+          switchScreen('menu');
+        });
+        document.getElementById('historyHeaderBtn').addEventListener('click', function () {
+          if (state.currentScreen === 'history') {
+            switchScreen('menu');
+          } else {
+            switchScreen('history');
+          }
+        });
+        document.getElementById('backToMenuFromHistoryBtn').addEventListener('click', function () {
+          switchScreen('menu');
+        });
+
+        // Search Bar Toggle & Filtering
+        const searchWrap = document.getElementById('searchBarWrap');
+        const searchInput = document.getElementById('searchInput');
+        const searchClear = document.getElementById('searchClearBtn');
+
+        document.getElementById('searchToggleBtn').addEventListener('click', function () {
+          if (state.currentScreen !== 'menu') {
+            switchScreen('menu');
+          }
+          const isOpen = searchWrap.classList.toggle('open');
+          if (isOpen) {
+            setTimeout(function () { searchInput.focus(); }, 150);
+          } else {
+            searchInput.value = '';
+            state.searchQuery = '';
+            searchClear.style.display = 'none';
+            renderMenuSections();
+          }
+        });
+
+        searchInput.addEventListener('input', function () {
+          state.searchQuery = this.value;
+          searchClear.style.display = this.value ? 'flex' : 'none';
+          renderMenuSections();
+        });
+
+        searchClear.addEventListener('click', function () {
+          searchInput.value = '';
+          state.searchQuery = '';
+          this.style.display = 'none';
+          renderMenuSections();
+          searchInput.focus();
+        });
+
+        // FINISH Dining Session Buttons & Confirmation Modal
+        document.getElementById('mainFinishSessionBtn').addEventListener('click', openFinishModal);
+        document.getElementById('historyFinishSessionBtn').addEventListener('click', openFinishModal);
+        document.getElementById('finishModalNoBtn').addEventListener('click', closeFinishModal);
+        document.getElementById('closeFinishModalX').addEventListener('click', closeFinishModal);
+        document.getElementById('finishModalYesBtn').addEventListener('click', confirmFinishDiningSession);
+        document.getElementById('finishModalBackdrop').addEventListener('click', function (e) {
+          if (e.target === this) closeFinishModal();
+        });
+
+        // Table Badge QR Simulator Modal
+        const tableModal = document.getElementById('tableModalBackdrop');
+        const tableInput = document.getElementById('customTableInput');
+        document.getElementById('tableBadgeBtn').addEventListener('click', function () {
+          tableInput.value = state.tableLabel.replace(/^Table\s+/i, '');
+          tableModal.classList.add('open');
+          setTimeout(function () { tableInput.focus(); }, 100);
+        });
+        function closeTableModal() {
+          tableModal.classList.remove('open');
+        }
+        document.getElementById('closeTableModalX').addEventListener('click', closeTableModal);
+        document.getElementById('cancelTableModalBtn').addEventListener('click', closeTableModal);
+        document.getElementById('saveTableModalBtn').addEventListener('click', function () {
+          const val = tableInput.value.trim();
+          if (val) {
+            state.tableLabel = /^table/i.test(val) ? val : `Table ${val}`;
+            localStorage.setItem(STORAGE_KEY_TABLE, state.tableLabel);
+            renderHeader();
+            showToast(`Switched to ${state.tableLabel}`);
+          }
+          closeTableModal();
+        });
+      }
+
+      /* ------------------------------------------------------------------------
+         10. INITIALIZE APP ON LOAD
+         ------------------------------------------------------------------------ */
+      function init() {
+        detectTableFromURL();
+        loadSessionFromStorage();
+        bindEvents();
+        renderAll();
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+</body>
+</html>
